@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:google_fonts/google_fonts.dart';
 
 void main() => runApp(MyApp());
 
@@ -14,6 +15,22 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Quiz App',
+      theme: ThemeData(
+        primarySwatch: Colors.deepPurple,
+        scaffoldBackgroundColor: Colors.white,
+        textTheme: GoogleFonts.poppinsTextTheme(),
+        elevatedButtonTheme: ElevatedButtonThemeData(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Colors.deepPurple,
+            foregroundColor: Colors.white,
+            textStyle: TextStyle(fontSize: 16),
+            padding: EdgeInsets.symmetric(vertical: 12, horizontal: 24),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+          ),
+        ),
+      ),
       home: LoginScreen(),
     );
   }
@@ -21,7 +38,6 @@ class MyApp extends StatelessWidget {
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
-
   @override
   _LoginScreenState createState() => _LoginScreenState();
 }
@@ -70,20 +86,24 @@ class _LoginScreenState extends State<LoginScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text("Login", style: TextStyle(fontSize: 24)),
+              Text("Login",
+                  style: GoogleFonts.poppins(
+                      fontSize: 28, fontWeight: FontWeight.bold)),
+              SizedBox(height: 20),
               TextField(
                 controller: emailController,
                 decoration: InputDecoration(labelText: 'Email'),
               ),
+              SizedBox(height: 10),
               TextField(
                 controller: passwordController,
                 decoration: InputDecoration(labelText: 'Password'),
                 obscureText: true,
               ),
-              SizedBox(height: 16),
+              SizedBox(height: 20),
               ElevatedButton(
                 onPressed: isLoading ? null : login,
-                child: Text("Login"),
+                child: isLoading ? CircularProgressIndicator() : Text("Login"),
               ),
               if (error.isNotEmpty)
                 Padding(
@@ -184,7 +204,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 Navigator.of(context).pop();
                 nextQuestion();
               },
-              child: Text("Next Question"),
+              child: Text("Next"),
             ),
           ],
         );
@@ -193,13 +213,13 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Color getOptionColor(int index) {
-    if (!answered) return Colors.blue;
+    if (!answered) return Colors.deepPurple.shade300;
 
     int correctIndex = getCorrectAnswerIndex(questions[currentIndex]);
 
     if (index == correctIndex) return Colors.green;
     if (index == selectedIndex) return Colors.red;
-    return Colors.grey;
+    return Colors.grey.shade300;
   }
 
   void nextQuestion() {
@@ -235,42 +255,68 @@ class _QuizScreenState extends State<QuizScreen> {
 
     return Scaffold(
       appBar: AppBar(title: Text("Quiz")),
-      body: Padding(
-        padding: EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Score: $score/${questions.length}",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-            SizedBox(height: 10),
-            Text("Q${currentIndex + 1}: ${q['question']}",
-                style: TextStyle(fontSize: 20)),
-            SizedBox(height: 20),
-            ...List.generate(4, (i) {
-              return Container(
-                margin: EdgeInsets.symmetric(vertical: 8),
-                width: double.infinity,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: getOptionColor(i),
-                    padding: EdgeInsets.symmetric(vertical: 16),
-                  ),
-                  onPressed: answered ? null : () => checkAnswer(i),
-                  child: Text(q['options'][i], style: TextStyle(fontSize: 16)),
-                ),
-              );
-            }),
-            SizedBox(height: 20),
-            if (answered)
-              Center(
-                child: ElevatedButton(
-                  onPressed: nextQuestion,
-                  child: Text(currentIndex == questions.length - 1
-                      ? "Finish"
-                      : "Continue"),
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Colors.purple.shade100, Colors.white],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Padding(
+          padding: EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("Score: $score/${questions.length}",
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              SizedBox(height: 10),
+              AnimatedSwitcher(
+                duration: Duration(milliseconds: 500),
+                transitionBuilder: (child, animation) {
+                  return SlideTransition(
+                    position: Tween<Offset>(
+                      begin: Offset(1, 0),
+                      end: Offset(0, 0),
+                    ).animate(animation),
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+                child: Text(
+                  "Q${currentIndex + 1}: ${q['question']}",
+                  key: ValueKey<int>(currentIndex),
+                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
                 ),
               ),
-          ],
+              SizedBox(height: 20),
+              ...List.generate(4, (i) {
+                return Container(
+                  margin: EdgeInsets.symmetric(vertical: 8),
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: getOptionColor(i),
+                      foregroundColor: Colors.white,
+                      padding: EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: answered ? null : () => checkAnswer(i),
+                    child:
+                        Text(q['options'][i], style: TextStyle(fontSize: 16)),
+                  ),
+                );
+              }),
+              SizedBox(height: 20),
+              if (answered)
+                Center(
+                  child: ElevatedButton(
+                    onPressed: nextQuestion,
+                    child: Text(currentIndex == questions.length - 1
+                        ? "Finish"
+                        : "Continue"),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -291,8 +337,8 @@ class ResultScreen extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text("Quiz Complete!", style: TextStyle(fontSize: 24)),
-            Text("Your Score: $score / $total", style: TextStyle(fontSize: 20)),
+            Text("🎉 Quiz Complete!", style: TextStyle(fontSize: 28)),
+            Text("Your Score: $score / $total", style: TextStyle(fontSize: 22)),
             SizedBox(height: 20),
             ElevatedButton(
               child: Text("Restart"),
